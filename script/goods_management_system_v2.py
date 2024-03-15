@@ -47,6 +47,7 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
             elif event == 'シャットダウン':
                 self.runtime = False
                 break
+    #物品登録追加・削除画面(研究室選択)  
     
     #汎用性選択画面1
     #page_title = ページ名
@@ -64,14 +65,15 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
             button_list_2,
             return_page
     ):
-        page = 0
+        page_num = 0
         layout = [
             [sg.Text(page_title, font=self.biggest_char_font, justification='center')],
             [sg.Text('', font=self.smallest_cahr_font, justification='center', key='error_message')],
             [sg.Text(page_explanation, font=self.normal_cahr_font, justification='center')],
-            [sg.Button(name_list[(3 * page) + 0], font=self.normal_cahr_font, button_color=('#000000', '#FFFFFF'), size=self.select_button_size, key='first_select')],
-            [sg.Button(name_list[(3 * page) + 1], font=self.normal_cahr_font, button_color=('#000000', '#FFFFFF'), size=self.select_button_size, key='seccond_select')],
-            [sg.Button(name_list[(3 * page) + 2], font=self.normal_cahr_font, button_color=('#000000', '#FFFFFF'), size=self.select_button_size, key='third_select')],
+            [sg.Button(name_list[(3 * page_num) + 0], font=self.normal_cahr_font, button_color=('#000000', '#FFFFFF'), size=self.select_button_size, key='first_select')],
+            [sg.Button(name_list[(3 * page_num) + 1], font=self.normal_cahr_font, button_color=('#000000', '#FFFFFF'), size=self.select_button_size, key='seccond_select')],
+            [sg.Button(name_list[(3 * page_num) + 2], font=self.normal_cahr_font, button_color=('#000000', '#FFFFFF'), size=self.select_button_size, key='third_select')],
+            [sg.Text(str(page_num + 1), font=self.normal_cahr_font, justification='center'), sg.Text('/' + str(name_list/3), font=self.normal_cahr_font, justification='center'), sg.Button('前', font=self.normal_cahr_font), sg.Button('次',font=self.normal_cahr_font)],
             [sg.Button(button_list_0[0], font=self.normal_cahr_font, key='button0'), sg.Button(button_list_1[0], font=self.normal_cahr_font, key='button1'), sg.Button(button_list_2[0], font=self.normal_cahr_font, key='button2')],
             [sg.Button('戻る', font=self.normal_cahr_font)]
         ]
@@ -80,3 +82,36 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
             event, values = windows.read()
             if event == sg.WIN_CLOSED or event == 'Cancel':
                 self.runtime = False
+                break
+            elif event == '前':
+                if page_num > 0:
+                    page_num = page_num - 1
+                else:
+                    page_num = (len(name_list) / 3) - 1
+                windows['first_select'].update(name_list[(3 * page_num) + 0])
+                windows['first_select'].update(name_list[(3 * page_num) + 1])
+                windows['first_select'].update(name_list[(3 * page_num) + 2])
+            elif event == '後':
+                if page_num < ((len(name_list) / 3) - 1):
+                    page_num = page_num + 1
+                else:
+                    page_num = 0
+                windows['first_select'].update(name_list[(3 * page_num) + 0])
+                windows['first_select'].update(name_list[(3 * page_num) + 1])
+                windows['first_select'].update(name_list[(3 * page_num) + 2])
+            elif event == 'button0':
+                self.page = button_list_0[1]
+                self.runtime == True
+                break
+            elif event == 'button1':
+                self.page = button_list_1[1]
+                self.runtime == True
+                break
+            elif event == 'button2':
+                self.page = button_list_2[1]
+                self.runtime == True
+                break
+            elif event == '戻る':
+                self.page = return_page
+                self.runtime == True
+                break
