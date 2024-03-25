@@ -9,3 +9,7 @@ if __name__=='__main__':
             gms_obj.select_lab_windows()
         elif gms_obj.page == gms_obj.PAGE.ADD_LAB_PAGE:
             gms_obj.add_lab_windows()
+        elif gms_obj.page == gms_obj.PAGE.RENAME_LAB_PAGE:
+            gms_obj.rename_lab_windows()
+        elif gms_obj.page == gms_obj.PAGE.REMOVE_LAB_PAGE:
+            gms_obj.remove_lab_windows()

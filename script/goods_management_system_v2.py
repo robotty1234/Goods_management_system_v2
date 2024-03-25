@@ -10,7 +10,7 @@ class LEND_BORROW():
 class REGISTRATION():
     #初期化
     def __init__(self):
-        pass
+        self.select_lab = ''
 
     def get_lab_names(self):
         lab_names = self.get_folder_names('data_tables')
@@ -18,6 +18,12 @@ class REGISTRATION():
     
     def make_lab(self, lab_name):
         self.make_folder('data_tables', lab_name)
+
+    def rename_lab(self, lab_name, lab_rename):
+        self.rename_folder('data_tables', lab_name, lab_rename)
+
+    def remove_lab(self, lab_name):
+        self.remove_folder('data_tables', lab_name)
 
     def get_folder_names(self, path):
         current_directory = os.path.dirname(os.path.abspath(__file__))
@@ -40,6 +46,19 @@ class REGISTRATION():
         normal_path = os.path.join(current_directory, path)
         new_folder_paht = normal_path + '/' + name
         os.mkdir(new_folder_paht)
+
+    def rename_folder(self, path, befor_name, after_name):
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        current_directory = current_directory.split('script')[0]
+        normal_path = os.path.join(current_directory, path)
+        os.rename((normal_path + '/' + befor_name), (normal_path + '/' + after_name))
+
+    def remove_folder(self, path, name):
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        current_directory = current_directory.split('script')[0]
+        normal_path = os.path.join(current_directory, path)
+        remove_folder_paht = normal_path + '/' + name
+        shutil.rmtree(remove_folder_paht)
 
 class GMS_GUI(LEND_BORROW, REGISTRATION):
     #列挙型
@@ -91,8 +110,10 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
 
     #物品登録追加・削除画面(研究室選択)
     def select_lab_windows(self):
+        #保持研究室名を初期化
+        self.registration.select_lab = ''
         lab_names = self.registration.get_lab_names()
-        self.runtime = self.general_purpose_selection_windows(
+        self.runtime, self.registration.select_lab = self.general_purpose_selection_windows_0(
             '研究室を選択',
             '研究室を選択してください',
             lab_names,
@@ -106,7 +127,7 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
     #研究室追加
     def add_lab_windows(self):
         lab_names = self.registration.get_lab_names()
-        self.runtime, new_lab_name = self.general_purpose_input_windows(
+        self.runtime, new_lab_name = self.general_purpose_input_windows_0(
             '研究室の追加',
             '追加する研究室名を入力してください',
             lab_names, 
@@ -117,13 +138,50 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
         self.page = GMS_GUI.PAGE.SELECT_LAB_PAGE
         return self.runtime
     
-    #汎用性選択画面1
+    #研究室名変更
+    def rename_lab_windows(self):
+        lab_names = self.registration.get_lab_names()
+        self.runtime, self.registration.select_lab = self.general_purpose_selection_windows_1(
+            '研究室名の変更',
+            '変更する研究室名を選択してください',
+            lab_names, 
+            GMS_GUI.PAGE.SELECT_LAB_PAGE
+        )
+        self.runtime, new_lab_name = self.general_purpose_input_windows_0(
+            '研究室名の変更',
+            (self.registration.select_lab + 'の変更名を入力してください'),
+            lab_names, 
+            GMS_GUI.PAGE.SELECT_LAB_PAGE
+        )
+        self.registration.rename_lab(self.registration.select_lab, new_lab_name)
+        self.page = GMS_GUI.PAGE.SELECT_LAB_PAGE
+        return self.runtime
+    
+    #研究室削除
+    def remove_lab_windows(self):
+        lab_names = self.registration.get_lab_names()
+        self.runtime, self.registration.select_lab = self.general_purpose_selection_windows_1(
+            '研究室の削除',
+            '削除する研究室名を選択してください',
+            lab_names, 
+            GMS_GUI.PAGE.SELECT_LAB_PAGE
+        )
+        self.runtime, cheack = self.general_confirm_input_windows_0(
+            '確認！',
+            self.registration.select_lab + 'を削除してよろしいでしょうか',
+        )
+        if cheack == True:
+            self.registration.remove_lab(self.registration.select_lab)
+        self.page = GMS_GUI.PAGE.SELECT_LAB_PAGE
+        return self.runtime
+    
+    #汎用性選択画面0
     #page_title = ページ名
     #page_explanation = 何を選択する画面化の説明文
     #name_list = 表示する名称の文字列リスト
     #button_list_0~2 = (ボタン表示名、遷移先)
     #return_page = 1つ前のページ
-    def general_purpose_selection_windows(
+    def general_purpose_selection_windows_0(
         self,
         page_title,
         page_explanation,
@@ -134,6 +192,7 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
         return_page
     ):
         page_num = 0
+        return_str = ''
         layout = [
             [sg.Text(page_title, font=self.biggest_char_font, justification='center')],
             [sg.Text(page_explanation, font=self.normal_cahr_font, justification='center')],
@@ -168,32 +227,110 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
                 windows['seccond_select'].update(name_list[(3 * page_num) + 1])
                 windows['third_select'].update(name_list[(3 * page_num) + 2])
                 windows['number'].update(str(page_num + 1))
+            elif event == 'first_select':
+                return_str = name_list[(3 * page_num) + 0]
+                self.runtime = True
+                break
+            elif event == 'seccond_select':
+                return_str = name_list[(3 * page_num) + 1]
+                self.runtime = True
+                break
+            elif event == 'third_select':
+                return_str = name_list[(3 * page_num) + 2]
+                self.runtime = True
+                break
             elif event == 'button0':
                 print(button_list_0[1])
                 self.page = button_list_0[1]
-                self.runtime == True
+                self.runtime = True
                 break
             elif event == 'button1':
                 self.page = button_list_1[1]
-                self.runtime == True
+                self.runtime = True
                 break
             elif event == 'button2':
                 self.page = button_list_2[1]
-                self.runtime == True
+                self.runtime = True
                 break
             elif event == '戻る':
                 self.page = return_page
-                self.runtime == True
+                self.runtime = True
                 break
         windows.close()
-        return self.runtime
+        return self.runtime, return_str
     
-    #汎用入力画面1
+    #汎用性選択画面1
     #page_title = ページ名
     #page_explanation = 何を選択する画面化の説明文
     #name_list = 表示する名称の文字列リスト
     #return_page = 1つ前のページ
-    def general_purpose_input_windows(
+    def general_purpose_selection_windows_1(
+        self,
+        page_title,
+        page_explanation,
+        name_list,
+        return_page
+    ):
+        page_num = 0
+        return_str = ''
+        layout = [
+            [sg.Text(page_title, font=self.biggest_char_font, justification='center')],
+            [sg.Text(page_explanation, font=self.normal_cahr_font, justification='center')],
+            [sg.Button(name_list[(3 * page_num) + 0], font=self.normal_cahr_font, button_color=('#000000', '#FFFFFF'), size=self.select_button_size, key='first_select')],
+            [sg.Button(name_list[(3 * page_num) + 1], font=self.normal_cahr_font, button_color=('#000000', '#FFFFFF'), size=self.select_button_size, key='seccond_select')],
+            [sg.Button(name_list[(3 * page_num) + 2], font=self.normal_cahr_font, button_color=('#000000', '#FFFFFF'), size=self.select_button_size, key='third_select')],
+            [sg.Text(str(page_num + 1), font=self.normal_cahr_font, justification='center', key='number'), sg.Text('/' + str(int(len(name_list) / 3)), font=self.normal_cahr_font, justification='center'), sg.Button('前', font=self.normal_cahr_font), sg.Button('後',font=self.normal_cahr_font)],
+            [sg.Button('戻る', font=self.normal_cahr_font)]
+        ]
+        windows = sg.Window('Goods_management_system_v2(GMS)', layout, self.max_windows_size)
+        while True:
+            event, values = windows.read()
+            if event == sg.WIN_CLOSED or event == 'Cancel':
+                self.runtime = False
+                break
+            elif event == '前':
+                if page_num > 0:
+                    page_num = page_num - 1
+                else:
+                    page_num = int((len(name_list) / 3) - 1)
+                windows['first_select'].update(name_list[(3 * page_num) + 0])
+                windows['seccond_select'].update(name_list[(3 * page_num) + 1])
+                windows['third_select'].update(name_list[(3 * page_num) + 2])
+                windows['number'].update(str(page_num + 1))
+            elif event == '後':
+                if page_num < ((len(name_list) / 3) - 1):
+                    page_num = page_num + 1
+                else:
+                    page_num = 0
+                windows['first_select'].update(name_list[(3 * page_num) + 0])
+                windows['seccond_select'].update(name_list[(3 * page_num) + 1])
+                windows['third_select'].update(name_list[(3 * page_num) + 2])
+                windows['number'].update(str(page_num + 1))
+            elif event == '戻る':
+                self.page = return_page
+                self.runtime == True
+                break
+            elif event == 'first_select':
+                return_str = name_list[(3 * page_num) + 0]
+                self.runtime = True
+                break
+            elif event == 'seccond_select':
+                return_str = name_list[(3 * page_num) + 1]
+                self.runtime = True
+                break
+            elif event == 'third_select':
+                return_str = name_list[(3 * page_num) + 2]
+                self.runtime = True
+                break
+        windows.close()
+        return self.runtime, return_str
+    
+    #汎用入力画面0
+    #page_title = ページ名
+    #page_explanation = 何を選択する画面化の説明文
+    #name_list = 表示する名称の文字列リスト
+    #return_page = 1つ前のページ
+    def general_purpose_input_windows_0(
         self,
         page_title,
         page_explanation,
@@ -230,7 +367,37 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
                         break
             elif event == '戻る':
                 self.page = return_page
-                self.runtime == True
+                self.runtime = True
                 break
         windows.close()
         return [self.runtime, return_str]
+    
+    #汎用確認画面0
+    #page_title = ページ名
+    #page_explanation = 何を選択する画面化の説明文
+    def general_confirm_input_windows_0(
+        self,
+        page_title,
+        page_explanation
+    ):
+        confirm = False
+        layout = [
+            [sg.Text(page_title, font=self.biggest_char_font, justification='center')],
+            [sg.Text(page_explanation, font=self.normal_cahr_font, justification='center')],
+            [sg.Button('はい', font=self.normal_cahr_font), sg.Button('いいえ', font=self.normal_cahr_font)]
+        ]
+        windows = sg.Window('Goods_management_system_v2(GMS)', layout, self.max_windows_size)
+        while True:
+            event, values = windows.read()
+            if event == sg.WIN_CLOSED or event == 'Cancel':
+                self.runtime = False
+                break
+            elif event == 'はい':
+                confirm = True
+                self.runtime = True
+                break
+            elif event == 'いいえ':
+                self.runtime = True
+                break
+        windows.close()
+        return [self.runtime, confirm]
