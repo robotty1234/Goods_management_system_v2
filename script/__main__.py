@@ -6,4 +6,4 @@ if __name__=='__main__':
         if gms_obj.page == gms_obj.PAGE.MENU_PAGE:
             gms_obj.menu_windows()
         elif gms_obj.page == gms_obj.PAGE.SELECT_LAB_PAGE:
-            gms_obj.
+            gms_obj.select_lab_windows()

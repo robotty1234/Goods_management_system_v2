@@ -1,17 +1,44 @@
 import PySimpleGUI as sg
 from enum import Enum
+import os
+import shutil
+import csv
     
 class LEND_BORROW():
     pass
 
 class REGISTRATION():
-    pass
+    #初期化
+    def __init__(self):
+        pass
+
+    def get_lab_names(self):
+        lab_names = self.get_folder_names('data_tables')
+        return lab_names
+
+    def get_folder_names(self, path):
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        current_directory = current_directory.split('script')[0]
+        data_list_path = os.path.join(current_directory, path)
+        return_names = [
+            f for f in os.listdir(data_list_path) if os.path.isdir(os.path.join(data_list_path, f))
+        ]
+        return_names.sort()
+        while len(return_names) % 3 != 0:
+            return_names.append('')
+        if len(return_names) == 0:
+            for i in range(3):
+                return_names.append('')
+        return return_names
 
 class GMS_GUI(LEND_BORROW, REGISTRATION):
     #列挙型
     class PAGE(Enum):
         MENU_PAGE = 1
         SELECT_LAB_PAGE = 2
+        ADD_LAB_PAGE = 3
+        RENAME_LAB_PAGE = 4
+        REMOVE_LAB_PAGE = 5
 
     #初期化
     def __init__(self):
@@ -23,6 +50,7 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
         self.category_max = 3
         self.runtime = True
         self.page = GMS_GUI.PAGE.MENU_PAGE
+        self.registration = REGISTRATION()
     
     #初期メニュー画面
     def menu_windows(self):
@@ -43,11 +71,27 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
                 break
             elif event == '物品登録追加・削除':
                 self.runtime = True
+                self.page = GMS_GUI.PAGE.SELECT_LAB_PAGE
                 break
             elif event == 'シャットダウン':
                 self.runtime = False
                 break
-    #物品登録追加・削除画面(研究室選択)  
+        windows.close()
+        return self.runtime
+
+    #物品登録追加・削除画面(研究室選択)
+    def select_lab_windows(self):
+        lab_names = self.registration.get_lab_names()
+        self.runtime = self.General_purpose_selection_windows(
+            '研究室を選択',
+            '研究室を選択してください',
+            lab_names,
+            ('新たな研究室を追加', GMS_GUI.PAGE.ADD_LAB_PAGE),
+            ('研究室名を変更', GMS_GUI.PAGE.RENAME_LAB_PAGE),
+            ('既存の研究室を削除', GMS_GUI.PAGE.REMOVE_LAB_PAGE),
+            GMS_GUI.PAGE.MENU_PAGE
+        )
+        return self.runtime
     
     #汎用性選択画面1
     #page_title = ページ名
@@ -68,12 +112,11 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
         page_num = 0
         layout = [
             [sg.Text(page_title, font=self.biggest_char_font, justification='center')],
-            [sg.Text('', font=self.smallest_cahr_font, justification='center', key='error_message')],
             [sg.Text(page_explanation, font=self.normal_cahr_font, justification='center')],
             [sg.Button(name_list[(3 * page_num) + 0], font=self.normal_cahr_font, button_color=('#000000', '#FFFFFF'), size=self.select_button_size, key='first_select')],
             [sg.Button(name_list[(3 * page_num) + 1], font=self.normal_cahr_font, button_color=('#000000', '#FFFFFF'), size=self.select_button_size, key='seccond_select')],
             [sg.Button(name_list[(3 * page_num) + 2], font=self.normal_cahr_font, button_color=('#000000', '#FFFFFF'), size=self.select_button_size, key='third_select')],
-            [sg.Text(str(page_num + 1), font=self.normal_cahr_font, justification='center'), sg.Text('/' + str(name_list/3), font=self.normal_cahr_font, justification='center'), sg.Button('前', font=self.normal_cahr_font), sg.Button('次',font=self.normal_cahr_font)],
+            [sg.Text(str(page_num + 1), font=self.normal_cahr_font, justification='center', key='number'), sg.Text('/' + str(int(len(name_list) / 3)), font=self.normal_cahr_font, justification='center'), sg.Button('前', font=self.normal_cahr_font), sg.Button('次',font=self.normal_cahr_font)],
             [sg.Button(button_list_0[0], font=self.normal_cahr_font, key='button0'), sg.Button(button_list_1[0], font=self.normal_cahr_font, key='button1'), sg.Button(button_list_2[0], font=self.normal_cahr_font, key='button2')],
             [sg.Button('戻る', font=self.normal_cahr_font)]
         ]
@@ -87,10 +130,11 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
                 if page_num > 0:
                     page_num = page_num - 1
                 else:
-                    page_num = (len(name_list) / 3) - 1
+                    page_num = int((len(name_list) / 3) - 1)
                 windows['first_select'].update(name_list[(3 * page_num) + 0])
                 windows['first_select'].update(name_list[(3 * page_num) + 1])
                 windows['first_select'].update(name_list[(3 * page_num) + 2])
+                windows['number'].update(str(page_num + 1))
             elif event == '後':
                 if page_num < ((len(name_list) / 3) - 1):
                     page_num = page_num + 1
@@ -99,6 +143,7 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
                 windows['first_select'].update(name_list[(3 * page_num) + 0])
                 windows['first_select'].update(name_list[(3 * page_num) + 1])
                 windows['first_select'].update(name_list[(3 * page_num) + 2])
+                windows['number'].update(str(page_num + 1))
             elif event == 'button0':
                 self.page = button_list_0[1]
                 self.runtime == True
@@ -115,3 +160,5 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
                 self.page = return_page
                 self.runtime == True
                 break
+        windows.close()
+        return self.runtime
