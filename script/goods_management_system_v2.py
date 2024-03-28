@@ -180,23 +180,22 @@ class REGISTRATION():
                     #元情報を保存
                     path = os.path.join(current_directory, (self.LAB_FOLDER  + '/' + self.select_lab + '/' + self.select_category + '/' + self.select_goods))
                     csv_file_path = (path + '/' + goods) + '.csv'
-                    goods_info = []
-                    with open(csv_file_path, encoding='utf8', newline='') as f:
-                        csvreader = csv.reader(f)
-                        for row in csvreader:
-                            goods_info = row
+                    goods_info = pandas.read_csv(csv_file_path).values.tolist()
                     print(goods_info)
                     #物品名の変更
-                    goods_info[0] = goods
+                    goods_info[0][0] = goods
                     #研究室名の変更
-                    goods_info[1] = lab
+                    goods_info[0][1] = lab
                     #カテゴリー名の変更
-                    goods_info[2] = category
+                    goods_info[0][2] = category
                     #上書き保存
-                    with open(csv_file_path, 'w') as f:
-                        writer = csv.writer(f)
-                        writer.writerow(['物品名','研究室', 'カテゴリー', '在庫', '貸出者'])
-                        writer.writerow(goods_info)
+                    goods_list = [
+                        ['物品名','研究室', 'カテゴリー', '在庫', '貸出者'],
+                        goods_info[0]
+                    ]
+                    df = pandas.DataFrame(goods_list[1:], columns=goods_list[0])
+                    df.to_csv(csv_file_path, index=False)
+                    
         #qr_code
         for lab in self.get_lab_names(False):
             self.select_lab = lab
@@ -458,7 +457,7 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
         self.registration.add_new_qr_code(self.registration.select_lab, self.registration.select_category, self.registration.add_goods_name)
         self.general_message_windows_0(
            self.registration.add_goods_name + 'を追加しました',
-           GMS_GUI.PAGE.MENU_PAGE
+           GMS_GUI.PAGE.SELECT_GOODS_PAGE
         )
     
     #物品情報の変更
