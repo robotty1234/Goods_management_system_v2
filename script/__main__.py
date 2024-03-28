@@ -21,3 +21,15 @@ if __name__=='__main__':
             gms_obj.rename_category_windows()
         elif gms_obj.page == gms_obj.PAGE.REMOVE_CATEGORY_PAGE:
             gms_obj.remove_category_windows()
+        elif gms_obj.page == gms_obj.PAGE.SELECT_GOODS_PAGE:
+            gms_obj.select_goods_windows()
+        elif gms_obj.page == gms_obj.PAGE.ADD_GOODS_PAGE_0:
+            gms_obj.add_goods_windows_0()
+        elif gms_obj.page == gms_obj.PAGE.ADD_GOODS_PAGE_1:
+            gms_obj.add_goods_windows_1()
+        elif gms_obj.page == gms_obj.PAGE.RENAME_GOODS_PAGE:
+            gms_obj.rename_goods_windows()
+        elif gms_obj.page == gms_obj.PAGE.REMOVE_GOODS_PAGE:
+            gms_obj.remove_goods_windows()
+        
+        
