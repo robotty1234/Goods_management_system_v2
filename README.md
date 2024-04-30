@@ -78,6 +78,15 @@
   ```
   pip install --break-system-packages pymsteams
   ```
+- opencv
+  - Ubuntの場合
+  ```
+  pip install opencv-python
+  ```
+  -  Raspberry pi OSの場合 
+  ```
+  pip install --break-system-packages opencv-python
+  ```
 ## 起動に必要なフォルダ
 本フォルダ内に`data_tables`と`qr_codes`という名前のファルダを作成してください。(登録情報を保存するフォルダなのでgitの対象にしていません)
 ## 起動方法
