@@ -5,20 +5,36 @@
   ```
   pip install PySimpleGUI==4.60.5
   ```
+  - Raspberry pi OSの場合
+  ```
+  pip install --break-system-packages PySimpleGUI==4.60.5
+  ```
 - PyQRCode
   - Ubuntの場合
   ```
   pip install PyQRCode
+  ```
+  -  Raspberry pi OSの場合
+  ```
+  pip install --break-system-packages PyQRCode
   ```
 - pypng
   - Ubuntの場合
   ```
   pip install pypng
   ```
+  -  Raspberry pi OSの場合
+  ```
+  pip install --break-system-packages pypng
+  ```
 - pandas
   - Ubuntの場合
   ```
   pip install pandas
+  ```
+  -  Raspberry pi OSの場合
+  ```
+  pip install --break-system-packages pandas
   ```
 - nfcpy
   - Ubuntの場合
@@ -26,8 +42,18 @@
   sudo apt install libusb-dev python3-usb
   sudo pip3 install nfcpy
   ```
+  -  Raspberry pi OSの場合
+  ```
+  sudo apt install libusb-dev python3-usb
+  sudo pip3 install --break-system-packages nfcpy
+  ```
 - ImageTk(PIL)
   - Ubuntの場合
+  ```
+  sudo apt install python3-pil.imagetk
+  sudo apt install python3-pil
+  ```
+  -  Raspberry pi OSの場合
   ```
   sudo apt install python3-pil.imagetk
   sudo apt install python3-pil
@@ -38,10 +64,19 @@
   sudo apt install libzbar0
   pip install pyzbar
   ```
+  -  Raspberry pi OSの場合
+  ```
+  sudo apt install libzbar0
+  pip install --break-system-packages pyzbar
+  ```
 - pymsteams
   - Ubuntの場合
   ```
   pip install pymsteams
+  ```
+  -  Raspberry pi OSの場合
+  ```
+  pip install --break-system-packages pymsteams
   ```
 ## 起動に必要なフォルダ
 本フォルダ内に`data_tables`と`qr_codes`という名前のファルダを作成してください。(登録情報を保存するフォルダなのでgitの対象にしていません)
