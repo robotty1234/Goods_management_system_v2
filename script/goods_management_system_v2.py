@@ -6,10 +6,85 @@ import csv
 import pprint
 import pyqrcode
 import pandas
+import time
+import nfc
+import cv2
+from PIL import Image, ImageTk
+from pyzbar.pyzbar import decode
+import pymsteams
     
 class LEND_BORROW():
-    pass
-
+    #初期化
+    def __init__(self):
+        self.student_number = ''
+        self.goods_name_list = []
+        self.error_goods_name_list = []
+        #Teamsと連携しているWebhookのURL
+        self.send_to_tems_url = 'https://utokai.webhook.office.com/webhookb2/bdec44b3-374b-4b51-91d9-0c2310e85765@8283096f-bcce-44d0-8f54-e57aa84d1a22/IncomingWebhook/0bf4493eff1e412b966d583a6c869938/5f22c588-8faa-4953-9c40-60a6ce150147'
+    
+    #学生証読み込み
+    def get_student_number(self, timeout):
+        nfc_loop = True
+        number = ''
+        with nfc.ContactlessFrontend("usb")  as clf:
+            start_time = time.time()
+            tag = clf.connect(rdwr={'on-connect': lambda tag: False}, terminate=lambda: time.time() - start_time > 0.01)
+            try:
+                number = str(tag.dump())
+                number = number.split('|')[9].split('.')[0]
+                nfc_loop = False
+            except:
+                number = 'ERROR'
+            #print(number)
+        return number
+    
+    #QR読み込み
+    def get_qr_code(self, frame):
+        qr_code_texts = []
+        for barcode in decode(frame):
+            code_data = barcode.data.decode('utf-8')
+            qr_code_texts.append(code_data)
+        return qr_code_texts
+    
+    #情報の更新
+    def update_info(self, goods_name, student_number):
+        return_flug = False
+        update_lab = goods_name.split('/')[0]
+        #print('update_lab : ' + update_lab)
+        update_category = goods_name.split('/')[1]
+        #print('update_category : ' + update_category)
+        update_goods = goods_name.split('/')[2]
+        #print('update_goods : ' + update_goods)
+        #情報の更新
+        #ファイルパス
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        current_directory = current_directory.split('script')[0]
+        path = os.path.join(current_directory, ('data_tables' + '/' + update_lab  + '/' + update_category + '/' + update_goods))
+        csv_file_path = (path + '/' + update_goods) + '.csv'
+        #csvファイルを取得
+        goods_info = pandas.read_csv(csv_file_path).values.tolist()
+        print(goods_info)
+        #在庫状態を確認
+        if goods_info[0][3] == 'x':
+            #貸出者と操作者と同一人物か
+            if goods_info[0][4] == student_number:
+                goods_info[0][3] = 'o'
+                goods_info[0][4] = '--------'
+                return_flug = True
+            else:
+                return_flug = False
+        else:
+            goods_info[0][3] = 'x'
+            goods_info[0][4] = student_number
+        #上書き保存
+        goods_list = [
+            ['物品名','研究室', 'カテゴリー', '在庫', '貸出者'],
+            goods_info[0]
+        ]
+        df = pandas.DataFrame(goods_list[1:], columns=goods_list[0])
+        df.to_csv(csv_file_path, index=False)
+        
+        
 class REGISTRATION():
     #初期化
     def __init__(self):
@@ -17,6 +92,7 @@ class REGISTRATION():
         self.select_category = ''
         self.select_goods = ''
         self.add_goods_name = '' 
+        self.code_scale = 5
         #物品フォルダを管理しているトップフォルダ名
         self.LAB_FOLDER = 'data_tables'
         #QRコードを管理しているトップフォルダ名
@@ -119,12 +195,12 @@ class REGISTRATION():
         current_directory = os.path.dirname(os.path.abspath(__file__))
         current_directory = current_directory.split('script')[0]
         path = os.path.join(current_directory, (self.LAB_FOLDER  + '/' + lab_name + '/' + category_name + '/' + goods_name))
-        code.png((path + '/' + goods_name+ '.png'), scale=5, module_color=[0, 0, 0, 128], background=[255, 255, 255])
+        code.png((path + '/' + goods_name+ '.png'), scale=self.code_scale, module_color=[0, 0, 0, 128], background=[255, 255, 255])
         #qrコードフォルダに保存
         current_directory = os.path.dirname(os.path.abspath(__file__))
         current_directory = current_directory.split('script')[0]
         path = os.path.join(current_directory, (self.QR_FOLDER  + '/' + lab_name + '/' + category_name))
-        code.png((path + '/' + goods_name + '.png'), scale=5, module_color=[0, 0, 0, 128], background=[255, 255, 255])
+        code.png((path + '/' + goods_name + '.png'), scale=self.code_scale, module_color=[0, 0, 0, 128], background=[255, 255, 255])
     
     def rename_goods(self, goods_name, goods_rename):
         path_goods  = self.LAB_FOLDER + '/' + self.select_lab + '/' + self.select_category
@@ -212,8 +288,8 @@ class REGISTRATION():
                     #新たにQRコードを作成
                     code = pyqrcode.create(lab + '/' + category + '/' + goods, error='L', version=3, mode='binary')
                     #上書き保存
-                    code.png((path_goods + '/' + goods + '.png'), scale=5, module_color=[0, 0, 0, 128], background=[255, 255, 255])
-                    code.png((path_qr + '/' + goods + '.png'), scale=5, module_color=[0, 0, 0, 128], background=[255, 255, 255])
+                    code.png((path_goods + '/' + goods + '.png'), scale=self.code_scale, module_color=[0, 0, 0, 128], background=[255, 255, 255])
+                    code.png((path_qr + '/' + goods + '.png'), scale=self.code_scale, module_color=[0, 0, 0, 128], background=[255, 255, 255])
         self.select_lab = befor_select_lab
         self.select_category = befor_select_category
         self.select_goods = befor_select_goods
@@ -235,6 +311,11 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
         RENAME_GOODS_PAGE = 12
         REMOVE_GOODS_PAGE = 13
         ADD_GOODS_PAGE_1 = 14
+        INPUT_NUMBER = 15
+        HOW_TO_USE = 16
+        INPUT_CODE = 17
+        UPDATE_GOODS = 18
+        SENT_COMPLETED = 19
 
     #初期化
     def __init__(self):
@@ -247,7 +328,9 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
         self.category_max = 3
         self.runtime = True
         self.page = GMS_GUI.PAGE.MENU_PAGE
+        self.lend_borrow = LEND_BORROW()
         self.registration = REGISTRATION()
+        self.web_camera = cv2.VideoCapture(0)
     
     #初期メニュー画面
     def menu_windows(self):
@@ -265,6 +348,7 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
                 break
             elif event == '貸出・返却':
                 self.runtime = True
+                self.page = GMS_GUI.PAGE.INPUT_NUMBER
                 break
             elif event == '物品登録追加・削除':
                 self.runtime = True
@@ -275,7 +359,235 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
                 break
         windows.close()
         return self.runtime
-
+    
+    #学生証読み込み処理画面
+    def input_number_windows(self):
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        current_directory = current_directory.split('script')[0]
+        left_img_path = os.path.join(current_directory, 'img/ic_card_befor.png')
+        right_img_path = os.path.join(current_directory, 'img/ic_card_after.png')
+        layout = [ 
+            [sg.Text('学生証読み込み', font = self.biggest_char_font, justification='center')],
+            [sg.Text('学生証を以下の図のようにおいてください', font = self.normal_cahr_font, justification='center')],
+            [sg.Image(filename=left_img_path), sg.Image(filename=right_img_path)],
+            [sg.Button('戻る', font=self.normal_cahr_font)]
+        ]
+        windows = sg.Window('Goods_management_system_v2(GMS)', layout, self.max_windows_size)
+        out_time = 0.01
+        while True:
+            event, values = windows.read(timeout=out_time)
+            if event == sg.WIN_CLOSED or event == 'Cancel':
+                self.runtime = False
+                break
+            elif event == '戻る':
+                self.runtime = True
+                self.page = GMS_GUI.PAGE.MENU_PAGE
+                break
+            else:
+                self.lend_borrow.student_number = self.lend_borrow.get_student_number(out_time)
+                if self.lend_borrow.student_number != 'ERROR':
+                    self.runtime = True
+                    self.page = GMS_GUI.PAGE.HOW_TO_USE
+                    break
+        windows.close()
+        return self.runtime
+    
+    #動作確認画面   
+    def how_to_use_windows(self):
+        self.lend_borrow.goods_name_list = ['', '', '']
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        current_directory = current_directory.split('script')[0]
+        reader_img_path = os.path.join(current_directory, 'img/QR_code_read.png')
+        out_img_path = os.path.join(current_directory, 'img/ic_card_out.png')
+        layout = [ 
+            [sg.Text('使用方法', font = self.biggest_char_font, justification='center')],
+            [sg.Text('1.返品・返却する物品に貼り付けたQRコード', font = self.normal_cahr_font, justification='center')],
+            [sg.Text('をカメラで読み取る', font = self.normal_cahr_font, justification='center')],
+            [sg.Text('2.QRコードを読み取り終わったら学生証を取る', font = self.normal_cahr_font, justification='center')],
+            [sg.Image(filename=reader_img_path), sg.Image(filename=out_img_path)],
+            [sg.Button('確認完了', font=self.normal_cahr_font)]
+        ]
+        windows = sg.Window('Goods_management_system_v2(GMS)', layout, self.max_windows_size)
+        while True:
+            event, values = windows.read()
+            if event == sg.WIN_CLOSED or event == 'Cancel':
+                self.runtime = False
+                break
+            elif event == '確認完了':
+                self.runtime = True
+                self.page = GMS_GUI.PAGE.INPUT_CODE
+                break
+        windows.close()
+        return self.runtime
+    
+    #QRコード読み込み
+    def input_qr_code(self):
+        page_num = 0
+        goods_list = 0
+        layout = [ 
+            [sg.Text('QRコードを読み込み', font = self.biggest_char_font, justification='center')],
+            [sg.Text('読み取った物品', font = self.normal_cahr_font, justification='center')],
+            [sg.Button(self.lend_borrow.goods_name_list[(3 * page_num) + 0], font = self.normal_cahr_font, size=self.select_button_size, key='first_select')],
+            [sg.Button(self.lend_borrow.goods_name_list[(3 * page_num) + 1], font = self.normal_cahr_font, size=self.select_button_size, key='seccond_select')],
+            [sg.Button(self.lend_borrow.goods_name_list[(3 * page_num) + 2], font = self.normal_cahr_font, size=self.select_button_size, key='third_select')],
+            [sg.Text(str(page_num + 1), font=self.normal_cahr_font, justification='center', key='number'), sg.Text('/' + str(int(len(self.lend_borrow.goods_name_list) / 3)), font=self.normal_cahr_font, justification='center', key = 'max_number'), sg.Button('前', font=self.normal_cahr_font), sg.Button('後',font=self.normal_cahr_font)],
+            [sg.Image(key='camera_img')]
+        ]
+        windows = sg.Window('Goods_management_system_v2(GMS)', layout, self.max_windows_size)
+        while True:
+            event, values = windows.read(timeout=0.5)
+            if event == sg.WIN_CLOSED or event == 'Cancel':
+                self.runtime = False
+                break
+            elif event == '前':
+                if page_num > 0:
+                    page_num = page_num - 1
+                else:
+                    page_num = int((len(self.lend_borrow.goods_name_list) / 3) - 1)
+                windows['first_select'].update(self.lend_borrow.goods_name_list[(3 * page_num) + 0])
+                windows['seccond_select'].update(self.lend_borrow.goods_name_list[(3 * page_num) + 1])
+                windows['third_select'].update(self.lend_borrow.goods_name_list[(3 * page_num) + 2])
+                windows['number'].update(str(page_num + 1))
+            elif event == '後':
+                if page_num < ((len(self.lend_borrow.goods_name_list) / 3) - 1):
+                    page_num = page_num + 1
+                else:
+                    page_num = 0
+                windows['first_select'].update(self.lend_borrow.goods_name_list[(3 * page_num) + 0])
+                windows['seccond_select'].update(self.lend_borrow.goods_name_list[(3 * page_num) + 1])
+                windows['third_select'].update(self.lend_borrow.goods_name_list[(3 * page_num) + 2])
+                windows['number'].update(str(page_num + 1))
+            else:
+                #カメラ画像更新
+                ret, frame = self.web_camera.read()
+                if ret == True:
+                    img_frame = cv2.resize(frame, dsize=None, fx=0.3 , fy=0.3)
+                    img_frame = cv2.imencode('.png', img_frame)[1].tobytes() 
+                    windows['camera_img'].update(data=img_frame)
+                    #QRコード読み取り
+                    qr_codese = self.lend_borrow.get_qr_code(frame)
+                    for qr_code_text in qr_codese:
+                        #print(qr_code_text)
+                        #読み取った物品名を登録
+                        #既に読み込んだ物品は当録しない
+                        if (qr_code_text in self.lend_borrow.goods_name_list) == False:
+                            if (goods_list % 3) != 0 or goods_list == 0:
+                                self.lend_borrow.goods_name_list[goods_list] = qr_code_text
+                                goods_list = goods_list + 1
+                            else:
+                                for i in range(3):
+                                    self.lend_borrow.goods_name_list.append('')
+                                self.lend_borrow.goods_name_list[goods_list] = qr_code_text
+                                goods_list = goods_list + 1
+                            #読み取り物品名更新
+                            page_num = int(len(self.lend_borrow.goods_name_list) / 3) - 1
+                            windows['first_select'].update(self.lend_borrow.goods_name_list[(3 * page_num) + 0])
+                            windows['seccond_select'].update(self.lend_borrow.goods_name_list[(3 * page_num) + 1])
+                            windows['third_select'].update(self.lend_borrow.goods_name_list[(3 * page_num) + 2]) 
+                            windows['max_number'].update('/' + str(int(len(self.lend_borrow.goods_name_list) / 3)))
+                            windows['number'].update(str(page_num + 1))
+                    #学生証確認
+                    target=self.lend_borrow.get_student_number(0.1)
+                    if target == 'ERROR':
+                        self.runtime = True
+                        self.page = GMS_GUI.PAGE.UPDATE_GOODS
+                        #空白部分を削除
+                        index = len(self.lend_borrow.goods_name_list) - 1
+                        while self.lend_borrow.goods_name_list[index] == '':
+                            self.lend_borrow.goods_name_list.pop(index)
+                            index = index - 1
+                        break                    
+                        
+        windows.close()
+        return self.runtime    
+    
+    #物品情報送信
+    def update_goods_windows(self):
+        all_goods_number = len(self.lend_borrow.goods_name_list)
+        update_goods_number = 0
+        self.lend_borrow.error_goods_name_list = []
+        layout = [ 
+            [sg.Text('物品情報', font = self.biggest_char_font, justification='center')],
+            [sg.Text('学籍番号:' + str(self.lend_borrow.student_number), font = self.normal_cahr_font, justification='center')],
+            [sg.Text('', font = self.normal_cahr_font, justification='center', key='doing_task')],
+        ]
+        windows = sg.Window('Goods_management_system_v2(GMS)', layout, self.max_windows_size)
+        #物品情報の更新
+        while True:
+            event, values = windows.read(timeout=0.1)
+            if event == sg.WIN_CLOSED or event == 'Cancel':
+                self.runtime = False
+                break
+            elif update_goods_number < all_goods_number:
+                windows['doing_task'].update('物品情報の更新['+ str(update_goods_number) + '/' + str(all_goods_number) + ']')
+                #情報更新
+                result = self.lend_borrow.update_info(self.lend_borrow.goods_name_list[update_goods_number], self.lend_borrow.student_number)
+                #エラーが発生した物品名を保存
+                if result == False:
+                    self.lend_borrow.error_goods_name_list.append(self.lend_borrow.goods_name_list[update_goods_number])
+                update_goods_number = update_goods_number + 1
+            elif update_goods_number >= all_goods_number:
+                #情報を送信
+                lab_lists = self.registration.get_lab_names(False)
+                for l in lab_lists:
+                    self.registration.select_lab = l
+                    sent_goods_infos = ['|物品名|研究室|カテゴリー|現在の在庫状況|貸出者|']
+                    category_lists = self.registration.get_category_names(False)
+                    for c in category_lists:
+                        self.registration.select_category = c
+                        goods_lists = self.registration.get_goods_names(False)
+                        for g in goods_lists:
+                            #物品の在庫状況を読み取り
+                            #ファイルパス
+                            self.registration.select_goods = g
+                            current_directory = os.path.dirname(os.path.abspath(__file__))
+                            current_directory = current_directory.split('script')[0]
+                            path = os.path.join(current_directory, ('data_tables' + '/' + self.registration.select_lab  + '/' + self.registration.select_category + '/' + self.registration.select_goods))
+                            csv_file_path = (path + '/' + self.registration.select_goods) + '.csv'
+                            #csvファイルを取得
+                            goods_info = pandas.read_csv(csv_file_path).values.tolist()
+                            goods_str = '|'
+                            for s in goods_info[0]:
+                                goods_str = goods_str + s + '|'
+                            goods_str = goods_str + '<br>'
+                            sent_goods_infos.append(goods_str)
+                    #teams = pymsteams.connectorcard(self.lend_borrow.send_to_tems_url)
+                    #teams.title("最新の在庫情報")
+                    #teams.text(list_texts)
+                    #teams.send()
+                    print('Title : ' + self.registration.select_lab + 'の最新物品情報')
+                    for ps in sent_goods_infos:
+                        print(ps)
+                    print('')
+                #更新終了
+                self.page = GMS_GUI.PAGE.SENT_COMPLETED
+                self.runtime = True
+                break
+        windows.close()
+        return self.runtime
+            
+    #送信完了画面
+    def sent_completed_windows(self):
+        layout = [ 
+            [sg.Text('送信完了', font = self.biggest_char_font, justification='center')],
+            [sg.Text('下記に表示された物品の情報更新はできませんでした', font = self.normal_cahr_font, justification='center')],
+            [sg.Text('エラーが起きた理由として「QRコードが未登録」、「貸出者と返却者が異なる」などが考えられます', font = self.smallest_cahr_font, justification='center')],
+            [sg.Text(self.lend_borrow.error_goods_name_list, font = self.normal_cahr_font, justification='center')],
+            [sg.Button('OK', font=self.normal_cahr_font)]
+        ]
+        windows = sg.Window('Goods_management_system_v2(GMS)', layout, self.max_windows_size)
+        while True:
+            event, values = windows.read()
+            if event == sg.WIN_CLOSED or event == 'Cancel':
+                self.runtime = False
+                break
+            elif event == 'OK':
+                self.runtime = True
+                self.page = GMS_GUI.PAGE.MENU_PAGE
+                break
+        windows.close()
+        return self.runtime
+        
     #物品登録追加・削除画面(研究室選択)
     def select_lab_windows(self):
         #保持研究室名を初期化

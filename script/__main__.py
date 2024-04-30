@@ -31,5 +31,13 @@ if __name__=='__main__':
             gms_obj.rename_goods_windows()
         elif gms_obj.page == gms_obj.PAGE.REMOVE_GOODS_PAGE:
             gms_obj.remove_goods_windows()
-        
-        
+        elif gms_obj.page == gms_obj.PAGE.INPUT_NUMBER:
+            gms_obj.input_number_windows()
+        elif gms_obj.page == gms_obj.PAGE.HOW_TO_USE:
+            gms_obj.how_to_use_windows()
+        elif gms_obj.page == gms_obj.PAGE.INPUT_CODE:
+            gms_obj.input_qr_code()
+        elif gms_obj.page == gms_obj.PAGE.UPDATE_GOODS:
+            gms_obj.update_goods_windows()
+        elif gms_obj.page == gms_obj.PAGE.SENT_COMPLETED:
+             gms_obj.sent_completed_windows()
