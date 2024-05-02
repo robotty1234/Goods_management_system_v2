@@ -12,6 +12,7 @@ import cv2
 from PIL import Image, ImageTk
 from pyzbar.pyzbar import decode
 import pymsteams
+import png
     
 class LEND_BORROW():
     #初期化
