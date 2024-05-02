@@ -1053,6 +1053,8 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
                     windows['error_mes'].update('空白です')
                 elif ('/' in values['input_str']) == True:
                     windows['error_mes'].update('「/」は使用できません')
+                elif (' ' in values['input_str']) == True:
+                    windows['error_mes'].update('「 (スペース)」は使用できません')
                 else:
                     equuality = False
                     for a in name_list:
