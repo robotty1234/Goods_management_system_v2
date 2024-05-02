@@ -87,6 +87,11 @@
   ```
   pip install --break-system-packages opencv-python
   ```
+-pypng
+  -Raspberry pi  OSの場合 
+  ```
+  sudo pip install --break-system-packages pypng
+```
 - RC-S380
 ```
   sudo sh -c 'echo SUBSYSTEM==\"usb\", ACTION==\"add\", ATTRS{idVendor}==\"054c\", ATTRS{idProduct}==\"06c1\", GROUP=\"plugdev\" >> /etc/udev/rules.d/nfcdev.rules'
