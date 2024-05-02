@@ -87,7 +87,7 @@
   ```
   pip install --break-system-packages opencv-python
   ```
--pypng
+- pypng
   -Raspberry pi  OSの場合 
   ```
   sudo pip install --break-system-packages pypng
@@ -97,6 +97,7 @@
   sudo sh -c 'echo SUBSYSTEM==\"usb\", ACTION==\"add\", ATTRS{idVendor}==\"054c\", ATTRS{idProduct}==\"06c1\", GROUP=\"plugdev\" >> /etc/udev/rules.d/nfcdev.rules'
   sudo udevadm control -R # then re-attach device
 ```
+  その後再起動
 ## 起動に必要なフォルダ
 本フォルダ内に`data_tables`と`qr_codes`という名前のファルダを作成してください。(登録情報を保存するフォルダなのでgitの対象にしていません)
 ## 起動方法
