@@ -87,11 +87,6 @@
   ```
   pip install --break-system-packages opencv-python
   ```
-- pypng
-  -Raspberry pi  OSの場合 
-  ```
-  sudo pip install --break-system-packages pypng
-  ```
 - カードリーダーRC-S380を使用するための設定(RC-S380を本体と接続しながら下記のコマンドを入力する)
 ```
   sudo sh -c 'echo SUBSYSTEM==\"usb\", ACTION==\"add\", ATTRS{idVendor}==\"054c\", ATTRS{idProduct}==\"06c1\", GROUP=\"plugdev\" >> /etc/udev/rules.d/nfcdev.rules'

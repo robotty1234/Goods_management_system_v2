@@ -552,10 +552,13 @@ class GMS_GUI(LEND_BORROW, REGISTRATION):
                                 goods_str = goods_str + s + '|'
                             goods_str = goods_str + '<br>'
                             sent_goods_infos.append(goods_str)
-                    #teams = pymsteams.connectorcard(self.lend_borrow.send_to_tems_url)
-                    #teams.title("最新の在庫情報")
-                    #teams.text(list_texts)
-                    #teams.send()
+                    teams = pymsteams.connectorcard(self.lend_borrow.send_to_tems_url)
+                    teams.title(self.registration.select_lab + 'の最新物品情報')
+                    teams_text =  ''
+                    for ps in sent_goods_infos:
+                        teams_text = teams_text + ps
+                    teams.text(teams_text)
+                    teams.send()
                     print('Title : ' + self.registration.select_lab + 'の最新物品情報')
                     for ps in sent_goods_infos:
                         print(ps)
