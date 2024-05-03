@@ -100,4 +100,6 @@
 ```
 python3 -m script
 ```
+## 使い方
+[使い方動画はこちら](https://youtu.be/zAyDfWs73Is)
 
